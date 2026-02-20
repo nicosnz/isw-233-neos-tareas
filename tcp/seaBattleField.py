@@ -2,7 +2,7 @@ class SeaBattleField:
     def __init__(self, filas=8, columnas=8):
         self.filas = filas
         self.columnas = columnas
-        self.tablero = self.generar_tablero()
+        self.tablero = self.__generar_tablero()
         self.barcos = []  # Lista de barcos colocados
         
         self.estructura_barcos = [
@@ -12,9 +12,12 @@ class SeaBattleField:
             (1, 4)   # 4 submarinos de 1 casilla
         ]
         
-        self.colocar_todos_barcos_automatico()
+        self.__colocar_todos_barcos_automatico()
+        # Crear tablero vacío para el oponente UNA VEZ que los barcos propios están colocados
+        # así nos aseguramos de que el tablero del oponente no contiene barcos por accidente
+        self.oponente_tablero = self.__generar_tablero()
     
-    def generar_tablero(self):
+    def __generar_tablero(self):
         tablero = [[' ' for _ in range(self.columnas)] for _ in range(self.filas)]
         return tablero
     
@@ -26,8 +29,22 @@ class SeaBattleField:
         # Filas con números
         for i, fila in enumerate(self.tablero):
             print(f"{i} " + " ".join(fila))
+
+    def mostrar_tableros_lado_a_lado(self):
+        """Muestra el tablero propio y el tablero (vacío) del oponente lado a lado."""
+        letras = [chr(65 + i) for i in range(self.columnas)]
+        # Cabeceras
+        izquierda = "  " + " ".join(letras)
+        derecha = "  " + " ".join(letras)
+        print(izquierda + ("   ") + derecha)
+
+        # Filas: usar el tablero del oponente almacenado en el atributo
+        for i in range(self.filas):
+            fila_izq = " ".join(self.tablero[i])
+            fila_der = " ".join(self.oponente_tablero[i])
+            print(f"{i} {fila_izq}   {i} {fila_der}")
     
-    def obtener_celdas_ocupadas(self, fila, columna, tamaño, horizontal):
+    def __obtener_celdas_ocupadas(self, fila, columna, tamaño, horizontal):
         celdas = []
         if horizontal:
             for i in range(tamaño):
@@ -37,7 +54,7 @@ class SeaBattleField:
                 celdas.append((fila + i, columna))
         return celdas
     
-    def obtener_zona_proximidad(self, celdas):
+    def __obtener_zona_proximidad(self, celdas):
         zona = set()
         for fila, columna in celdas:
             for f in range(fila - 1, fila + 2):
@@ -46,7 +63,7 @@ class SeaBattleField:
                         zona.add((f, c))
         return zona
     
-    def puede_colocar_barco(self, fila, columna, tamaño, horizontal):
+    def __puede_colocar_barco(self, fila, columna, tamaño, horizontal):
         
         # Verificar que no salga del tablero
         if horizontal:
@@ -57,10 +74,10 @@ class SeaBattleField:
                 return False
         
         # Obtener celdas que ocuparía el barco
-        celdas = self.obtener_celdas_ocupadas(fila, columna, tamaño, horizontal)
+        celdas = self.__obtener_celdas_ocupadas(fila, columna, tamaño, horizontal)
         
         # Obtener zona de proximidad (donde no pueden estar otros barcos)
-        zona_proximidad = self.obtener_zona_proximidad(celdas)
+        zona_proximidad = self.__obtener_zona_proximidad(celdas)
         
         # Verificar que no haya barcos en la zona de proximidad
         for celda_ocupada, _ in self.barcos:
@@ -70,14 +87,14 @@ class SeaBattleField:
         
         return True
     
-    def colocar_barco(self, fila, columna, tamaño, horizontal=True):
+    def __colocar_barco(self, fila, columna, tamaño, horizontal=True):
         """Coloca un barco si es posible. Retorna True si se colocó, False si no"""
         
-        if not self.puede_colocar_barco(fila, columna, tamaño, horizontal):
+        if not self.__puede_colocar_barco(fila, columna, tamaño, horizontal):
             return False
         
         # Obtener celdas del barco
-        celdas = self.obtener_celdas_ocupadas(fila, columna, tamaño, horizontal)
+        celdas = self.__obtener_celdas_ocupadas(fila, columna, tamaño, horizontal)
         
         # Guardar el barco
         self.barcos.append((celdas, tamaño))
@@ -88,7 +105,7 @@ class SeaBattleField:
         
         return True
     
-    def colocar_todos_barcos_automatico(self):
+    def __colocar_todos_barcos_automatico(self):
         """Intenta colocar automáticamente todos los barcos de forma aleatoria"""
         import random
         
@@ -102,7 +119,7 @@ class SeaBattleField:
                 columna = random.randint(0, self.columnas - 1)
                 horizontal = random.choice([True, False])
                 
-                if self.colocar_barco(fila, columna, tamaño, horizontal):
+                if self.__colocar_barco(fila, columna, tamaño, horizontal):
                     colocados += 1
                 
                 intentos += 1
@@ -111,3 +128,37 @@ class SeaBattleField:
                 print(f"Advertencia: Solo se colocaron {colocados}/{cantidad} barcos de tamaño {tamaño}")
         
         return len(self.barcos) == 10
+
+  
+        """Marca un tiro en el tablero del oponente en coordenadas (x, y).
+
+        Convención: x = columna, y = fila (0-based).
+
+        Antes de marcar, verifica que (x,y) esté dentro del tablero, que aún
+        no haya sido disparado y que NO esté en la zona de proximidad de ninguno
+        de los barcos propios (no debe tocar mis barcos).
+
+        Retorna:
+        - True si el tiro fue marcado con éxito en `oponente_tablero` (marca 'O').
+        - False si la coordenada es inválida, ya fue disparada o está en zona de proximidad.
+        """
+        # Validar límites
+        if not (0 <= x < self.columnas and 0 <= y < self.filas):
+            return False
+
+        # Verificar si ya se disparó ahí
+        if self.oponente_tablero[y][x] != ' ':
+            return False
+
+        # Construir la zona prohibida (proximidad) de todos los barcos propios
+        zona_prohibida = set()
+        for celdas, _ in self.barcos:
+            zona_prohibida |= self.__obtener_zona_proximidad(celdas)
+
+        # Si la celda está en zona prohibida, no permitir el disparo
+        if (y, x) in zona_prohibida:
+            return False
+
+        # Marcar el disparo como 'O' (por defecto, sin info del oponente)
+        self.oponente_tablero[y][x] = 'O'
+        return True
