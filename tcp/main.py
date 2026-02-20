@@ -1,10 +1,14 @@
 import sys
 from servidor import Servidor
 from cliente import Cliente
+from seaBattleField import SeaBattleField
 def StartServer():
     servidor = Servidor()
     servidor.crearConexion()
     socket_cliente = servidor.aceptar_conexion()
+    tablero = SeaBattleField()
+    tablero.mostrar_tablero()
+    
     while True:
         recibido = socket_cliente.recv(1024)
         if recibido.decode() == "close":
@@ -13,9 +17,12 @@ def StartServer():
         socket_cliente.send(recibido)
     socket_cliente.close()
     servidor.cerrarConexion()
+    
 def StartClient():
     cliente = Cliente()
     cliente.crearConexion()
+    tablero = SeaBattleField()
+    tablero.mostrar_tablero()
     while True:
         mensaje = cliente.enviarMensaje()
         if mensaje == "close":
