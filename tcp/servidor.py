@@ -8,7 +8,6 @@ class Servidor:
     
     def crearConexion(self):
         self.socket_server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        # permitir reutilizar dirección inmediatamente
         self.socket_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket_server.bind(("",self.puerto))
         self.socket_server.listen(1)
@@ -29,7 +28,6 @@ class Servidor:
         return movimiento
         
     def enviarRespuestaAtaque(self, isShoot):
-        """Envía True si fue tocado, False si fue agua"""
         respuesta = "True" if isShoot else "False"
         self.cliente_socket.send(respuesta.encode('utf-8'))
     def recibirRespuestaAtaque(self):

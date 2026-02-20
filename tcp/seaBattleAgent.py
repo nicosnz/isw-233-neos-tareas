@@ -26,54 +26,70 @@ class SeaBattleAgent:
             
             if turno == "servidor" and instancia == "servidor":
                 movimiento = self.servidor.enviarMovimiento()
-                columna,fila = self.parse_move(movimiento)
-                isShoot = self.cliente.recibirRespuestaAtaque()
-                if isShoot:
-                    self.tablero.oponente_tablero[fila][columna] = 'X'
-                    self.tablero.mostrar_tableros_lado_a_lado()
-                    turno = "servidor"
-                else:
-                    self.tablero.oponente_tablero[fila][columna] = 'O'
-                    self.tablero.mostrar_tableros_lado_a_lado()
+                parsed_move = self.parse_move(movimiento)
+                if parsed_move is None:
                     turno = "cliente"
-
-                turno = "cliente"
+                else:
+                    columna, fila = parsed_move
+                    isShoot = self.servidor.recibirRespuestaAtaque()
+                    if isShoot:
+                        self.tablero.oponente_tablero[fila][columna] = 'X'
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "servidor"
+                    else:
+                        self.tablero.oponente_tablero[fila][columna] = 'O'
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "cliente"
             elif turno == "servidor" and instancia == "cliente":
                 movimientoServidor = self.cliente.recibirMovimientoServidor()
-                columna,fila = self.parse_move(movimientoServidor)
-                isShoot = self.shoot(columna,fila)
-                if isShoot :
-                    self.tablero[fila][columna] = "X"
-                    self.servidor.enviarRespuestaAtaque(isShoot)
-                    self.tablero.mostrar_tableros_lado_a_lado()
-                    turno = "servidor"
-                else:
-                    self.tablero.mostrar_tableros_lado_a_lado()
+                parsed_move = self.parse_move(movimientoServidor)
+                if parsed_move is None:
                     turno = "cliente"
+                else:
+                    columna, fila = parsed_move
+                    isShoot = self.shoot(columna, fila)
+                    if isShoot:
+                        self.tablero.tablero[fila][columna] = "X"
+                        self.cliente.enviarRespuestaAtaque(isShoot)
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "servidor"
+                    else:
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        self.cliente.enviarRespuestaAtaque(isShoot)
+                        turno = "cliente"
             elif turno == "cliente" and instancia == "servidor":
                 movimientoCliente = self.servidor.recibirMensaje()
-                columna,fila = self.parse_move(movimientoCliente)
-                isShoot = self.shoot(columna,fila)
-                if isShoot :
-                    self.tablero[fila][columna] = "X"
-                    self.servidor.enviarRespuestaAtaque(isShoot)
-                    self.tablero.mostrar_tableros_lado_a_lado()
-                    turno = "cliente"
-                else:
-                    self.tablero.mostrar_tableros_lado_a_lado()
+                parsed_move = self.parse_move(movimientoCliente)
+                if parsed_move is None:
                     turno = "servidor"
+                else:
+                    columna, fila = parsed_move
+                    isShoot = self.shoot(columna, fila)
+                    if isShoot:
+                        self.tablero.tablero[fila][columna] = "X"
+                        self.servidor.enviarRespuestaAtaque(isShoot)
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "cliente"
+                    else:
+                        self.servidor.enviarRespuestaAtaque(isShoot)
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "servidor"
             elif turno == "cliente" and instancia == "cliente":
                 movimiento = self.cliente.enviarMovimiento()
-                columna,fila = self.parse_move(movimiento)
-                isShoot = self.cliente.recibirRespuestaAtaque()
-                if isShoot:
-                    self.tablero.oponente_tablero[fila][columna] = 'X'
-                    self.tablero.mostrar_tableros_lado_a_lado()
+                parsed_move = self.parse_move(movimiento)
+                if parsed_move is None:
                     turno = "cliente"
                 else:
-                    self.tablero.oponente_tablero[fila][columna] = 'O'
-                    self.tablero.mostrar_tableros_lado_a_lado()
-                    turno = "servidor"
+                    columna, fila = parsed_move
+                    isShoot = self.cliente.recibirRespuestaAtaque()
+                    if isShoot:
+                        self.tablero.oponente_tablero[fila][columna] = 'X'
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "cliente"
+                    else:
+                        self.tablero.oponente_tablero[fila][columna] = 'O'
+                        self.tablero.mostrar_tableros_lado_a_lado()
+                        turno = "servidor"
     
     def shoot(self, columna, fila):
         

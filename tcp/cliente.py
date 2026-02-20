@@ -3,7 +3,7 @@ import socket
 class Cliente:
     def __init__(self):
         self.puerto = 8000
-        self.ip = "192.168.0.132"
+        self.ip = "localhost"
         self.socket_server = None
     
     def crearConexion(self):
@@ -19,8 +19,7 @@ class Cliente:
         recibido = self.socket_server.recv(1024)
         mensaje = recibido.decode()
         return mensaje
-    def enviarRespuestaAtaque(self, isShoot,servidor_socket):
-        """Envía True si fue tocado, False si fue agua"""
+    def enviarRespuestaAtaque(self, isShoot):
         respuesta = "True" if isShoot else "False"
         self.socket_server.send(respuesta.encode('utf-8'))
     
